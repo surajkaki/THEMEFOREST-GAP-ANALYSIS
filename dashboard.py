@@ -1,16 +1,29 @@
 """
-ThemeForest Gap Analysis Dashboard Generator
-=============================================
-Run this script to generate ThemeForest_Dashboard.html
-Usage: python generate_dashboard.py
-Output: ThemeForest_Dashboard.html  (opens in any browser — no install needed)
+ThemeForest Gap Analysis Dashboard — Web Server
+================================================
+Serves the dashboard over HTTP so anyone on the network can open it.
+
+Usage:
+    python dashboard_server.py              # default port 8080
+    python dashboard_server.py --port 5000  # custom port
+    python dashboard_server.py --port 80    # standard HTTP (needs sudo on Linux)
+
+Access from any browser:
+    http://<YOUR_SERVER_IP>:8080
+    e.g.  http://192.168.1.10:8080
+          http://123.45.67.89:8080
+
+Stop server:  Ctrl + C
 """
 
 import os
-import webbrowser
+import socket
+import argparse
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# ── OUTPUT PATH ──────────────────────────────────────────────────────
-OUTPUT_FILE = "ThemeForest_Dashboard.html"
+# ── CONFIG ───────────────────────────────────────────────────────────
+DEFAULT_PORT = 8080
+OUTPUT_FILE  = "ThemeForest_Dashboard.html"
 
 # ── ALL DATA ─────────────────────────────────────────────────────────
 READINESS_CRITERIA = [
@@ -586,24 +599,81 @@ buildOverview();
     return html
 
 
+# ── HTTP REQUEST HANDLER ─────────────────────────────────────────────
+class DashboardHandler(BaseHTTPRequestHandler):
+    """Serves the dashboard HTML for every GET request."""
+
+    html_content = b""  # filled in before server starts
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(self.html_content)))
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(self.html_content)
+
+    def log_message(self, fmt, *args):
+        # Clean up server log output
+        print(f"  [{self.address_string()}]  {fmt % args}")
+
+
+def get_local_ip():
+    """Best-effort: returns the machine's LAN IP address."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
 # ── MAIN ─────────────────────────────────────────────────────────────
 def main():
-    print("Generating ThemeForest Gap Analysis Dashboard...")
-    html_content = build_html()
+    parser = argparse.ArgumentParser(description="ThemeForest Dashboard Web Server")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT,
+                        help=f"Port to listen on (default: {DEFAULT_PORT})")
+    parser.add_argument("--host", type=str, default="0.0.0.0",
+                        help="Host to bind to (default: 0.0.0.0 = all interfaces)")
+    args = parser.parse_args()
 
+    # 1. Build the HTML
+    print("Building dashboard HTML...")
+    html_content = build_html()
+    DashboardHandler.html_content = html_content.encode("utf-8")
+
+    # 2. Also save a copy to disk (optional but handy)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(html_content)
-
     size_kb = os.path.getsize(OUTPUT_FILE) / 1024
-    print(f"Done! File saved: {OUTPUT_FILE}  ({size_kb:.1f} KB)")
-    print(f"Open in browser: file://{os.path.abspath(OUTPUT_FILE)}")
+    print(f"HTML saved to disk: {OUTPUT_FILE}  ({size_kb:.1f} KB)")
 
-    # Auto-open in browser if possible
+    # 3. Start the HTTP server
+    server = HTTPServer((args.host, args.port), DashboardHandler)
+    local_ip = get_local_ip()
+
+    print()
+    print("=" * 52)
+    print("  ThemeForest Dashboard Server is RUNNING")
+    print("=" * 52)
+    print(f"  Local:    http://localhost:{args.port}")
+    print(f"  Network:  http://{local_ip}:{args.port}")
+    print(f"  All IPs:  http://0.0.0.0:{args.port}")
+    print()
+    print("  Share the Network URL with anyone on your network.")
+    print("  For public access, use your server's public IP.")
+    print()
+    print("  Press Ctrl + C to stop the server.")
+    print("=" * 52)
+
     try:
-        webbrowser.open(f"file://{os.path.abspath(OUTPUT_FILE)}")
-        print("Dashboard opened in your default browser.")
-    except Exception:
-        print("Could not auto-open browser. Please open the file manually.")
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print()
+        print("Server stopped.")
+        server.server_close()
 
 
 if __name__ == "__main__":
