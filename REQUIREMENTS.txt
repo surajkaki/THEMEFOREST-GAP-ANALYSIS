@@ -1,9 +1,22 @@
-
----
-
-## Installation
-
-### Clone Repository
-
-```bash
-git clone https://github.com/your-username/themeforest-gap-dashboard.git
+# ThemeForest Gap Analysis Dashboard
+# ====================================
+# This project uses ONLY Python standard library modules.
+# No third-party packages are required.
+#
+# Standard library modules used:
+#   - http.server   (built-in HTTP server)
+#   - socket        (detect local IP address)
+#   - argparse      (CLI arguments --port, --host)
+#   - os            (file path operations)
+#
+# Python version requirement:
+#   Python >= 3.7
+#
+# To verify your Python version:
+#   python --version
+#
+# If you ever extend this project with optional packages,
+# add them below this line:
+# e.g.
+# flask==3.0.0
+# pandas==2.2.0
