@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThemeForest Gap Analysis Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:   #1F4E78;
+  --blue:   #2E75B6;
+  --lblue:  #BDD7EE;
+  --w1:     #378ADD;
+  --w2:     #EF9F27;
+  --w3:     #1D9E75;
+  --red:    #E24B4A;
+  --gold:   #C9A44B;
+  --bg:     #F0F4F8;
+  --card:   #FFFFFF;
+  --border: #E2E8F0;
+  --text1:  #1A2332;
+  --text2:  #64748B;
+  --text3:  #94A3B8;
+  --green:  #22C55E;
+  --amber:  #F59E0B;
+  --pill-cr-bg:#FEE2E2; --pill-cr:#991B1B;
+  --pill-mj-bg:#FEF3C7; --pill-mj:#92400E;
+  --pill-mo-bg:#DCFCE7; --pill-mo:#166534;
+  --pill-rd-bg:#DBEAFE; --pill-rd:#1E40AF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);font-size:13px;min-height:100vh}
+
+/* ── COVER HEADER ── */
+.cover{background:linear-gradient(135deg,var(--navy) 0%,#2563EB 60%,#1D9E75 100%);padding:28px 36px 22px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.04)}
+.cover::after{content:'';position:absolute;bottom:-80px;left:20%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.03)}
+.cover-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.cover-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;font-size:11px;color:rgba(255,255,255,.85);font-weight:500;letter-spacing:.3px}
+.cover h1{font-size:26px;font-weight:700;color:#fff;margin:14px 0 4px;letter-spacing:-.3px}
+.cover h1 span{color:#93C5FD}
+.cover-sub{font-size:12px;color:rgba(255,255,255,.7);margin-bottom:16px}
+.cover-meta{display:flex;gap:20px;flex-wrap:wrap}
+.cover-meta-item{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 14px}
+.cover-meta-item .lbl{font-size:10px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.cover-meta-item .val{font-size:13px;font-weight:600;color:#fff}
+
+/* ── NAV BAR ── */
+.nav-wrap{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 36px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:48px}
+.tabs{display:flex;gap:2px;overflow-x:auto;padding:6px 0}
+.tab{font-size:12px;font-weight:500;padding:6px 14px;border:none;background:none;color:var(--text2);cursor:pointer;border-radius:6px;transition:all .15s;white-space:nowrap}
+.tab:hover{background:var(--bg);color:var(--text1)}
+.tab.active{background:var(--navy);color:#fff}
+.filter-wrap{display:flex;align-items:center;gap:8px}
+.filter-wrap label{font-size:11px;color:var(--text2);font-weight:500}
+select{font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text1);cursor:pointer;outline:none}
+select:focus{border-color:var(--blue)}
+
+/* ── MAIN ── */
+.main{padding:20px 36px 40px}
+.page{display:none}.page.active{display:block}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
+.kpi-card.blue::before{background:var(--w1)}
+.kpi-card.amber::before{background:var(--w2)}
+.kpi-card.green::before{background:var(--w3)}
+.kpi-card.red::before{background:var(--red)}
+.kpi-card.navy::before{background:var(--navy)}
+.kpi-card.gold::before{background:var(--gold)}
+.kpi-lbl{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:700;color:var(--text1);line-height:1;margin-bottom:4px;font-family:'DM Mono',monospace}
+.kpi-delta{font-size:11px;color:var(--text2)}
+.kpi-delta.up{color:#166534}.kpi-delta.dn{color:#991B1B}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.g13{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title .dot{width:8px;height:8px;border-radius:50%}
+.ch{position:relative;width:100%}
+
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend b{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ── TABLES ── */
+.dash-table{width:100%;border-collapse:collapse;font-size:11px}
+.dash-table th{text-align:left;font-weight:600;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.dash-table td{padding:6px 8px;border-bottom:1px solid var(--bg);color:var(--text1)}
+.dash-table tr:last-child td{border-bottom:none}
+.dash-table tr:hover td{background:var(--bg)}
+
+/* ── PILLS ── */
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.2px}
+.pill.cr{background:var(--pill-cr-bg);color:var(--pill-cr)}
+.pill.mj{background:var(--pill-mj-bg);color:var(--pill-mj)}
+.pill.mo{background:var(--pill-mo-bg);color:var(--pill-mo)}
+.pill.rd{background:var(--pill-rd-bg);color:var(--pill-rd)}
+
+/* ── RAG cells ── */
+.rag-cr{color:#991B1B;font-weight:700}.rag-mj{color:#92400E;font-weight:600}.rag-mo{color:#166534}.rag-ok{color:#1E40AF}
+td.no{color:#DC2626;font-weight:600}td.yes{color:#16A34A;font-weight:600}td.partial{color:#D97706;font-weight:600}td.na2{color:var(--text3)}
+
+/* ── FUNNEL BARS ── */
+.funnel-item{margin-bottom:9px}
+.funnel-label{display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px}
+.funnel-label .name{color:var(--text1);font-weight:500}
+.funnel-label .nums{color:var(--text2);font-family:'DM Mono',monospace;font-size:10px}
+.funnel-bar-bg{height:14px;background:var(--bg);border-radius:4px;overflow:hidden}
+.funnel-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* ── ROADMAP ── */
+.gantt-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+.gantt-task{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text1)}
+.gantt-owner{width:80px;color:var(--text2);font-size:10px;text-align:right;flex-shrink:0}
+.gantt-wks{display:flex;gap:2px;flex-shrink:0}
+.gantt-wk{width:20px;height:16px;border-radius:3px;background:var(--bg)}
+.gantt-wk.p1{background:#BFDBFE}.gantt-wk.p2{background:#FDE68A}.gantt-wk.p3{background:#BBF7D0}
+.phase-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 0 2px;margin-top:6px}
+.phase-header.p1{color:#1D4ED8}.phase-header.p2{color:#92400E}.phase-header.p3{color:#166534}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:16px 36px;color:var(--text3);font-size:10px;border-top:1px solid var(--border);background:#fff;margin-top:20px}
+
+@media(max-width:768px){
+  .cover{padding:20px 18px 16px}
+  .main{padding:14px 12px 30px}
+  .nav-wrap{padding:0 12px}
+  .g2,.g3,.g13{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ COVER HEADER ══ -->
+<div class="cover">
+  <div class="cover-top">
+    <div>
+      <div class="cover-badge">📊 Gap Analysis Dashboard</div>
+      <h1>ThemeForest <span>Gap Analysis</span></h1>
+      <div class="cover-sub">3 Website Templates &nbsp;·&nbsp; Marketplace Readiness &nbsp;·&nbsp; Conversion &amp; Revenue KPIs</div>
+    </div>
+  </div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><div class="lbl">Templates Reviewed</div><div class="val">W1 · W2 · W3</div></div>
+    <div class="cover-meta-item"><div class="lbl">Data Source</div><div class="val">ThemeForest_Dashboard_SampleData.xlsx</div></div>
+    <div class="cover-meta-item"><div class="lbl">Report Status</div><div class="val">Sample Data — Ready for Review</div></div>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<div class="nav-wrap">
+  <div class="tabs" id="tabNav"></div>
+  <div class="filter-wrap">
+    <label>Template:</label>
+    <select id="tmplFilter" onchange="applyFilter()">
+      <option value="all">All Templates</option>
+      <option value="w1">W1 – Architect</option>
+      <option value="w2">W2 – Business</option>
+      <option value="w3">W3 – Course</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ PAGES ══ -->
+<div class="main">
+  <div id="p-overview"  class="page active"></div>
+  <div id="p-funnel"    class="page"></div>
+  <div id="p-sales"     class="page"></div>
+  <div id="p-traffic"   class="page"></div>
+  <div id="p-revenue"   class="page"></div>
+  <div id="p-gaps"      class="page"></div>
+  <div id="p-roadmap"   class="page"></div>
+</div>
+
+<div class="footer">
+  ThemeForest Gap Analysis Dashboard &nbsp;·&nbsp; Data: ThemeForest_Dashboard_SampleData.xlsx &nbsp;·&nbsp; Prepared for Dan Rodney &nbsp;·&nbsp; Target: 08/05/2026 &nbsp;·&nbsp; Sample data — replace with live submissions
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const C = {w1:'#378ADD',w2:'#EF9F27',w3:'#1D9E75',tgt:'#E24B4A',opt:'#639922',lb:'#BDD7EE',la:'#FDE68A',lg:'#BBF7D0'};
+
+const readiness = {
+  criteria:['Design Originality','Typography System','Colour & Visual Identity','Animation / Motion','Inner Page Count','Responsiveness','UX / Navigation','Code Quality','Performance (PageSpeed)','Accessibility (WCAG)','Documentation','Support Infrastructure','Marketplace Listing'],
+  w1:[3,3,4,0,1,5,4,4,5,2,0,0,0],
+  w2:[4,4,4,0,1,5,5,4,5,3,0,0,0],
+  w3:[5,4,5,2,2,6,5,5,5,3,0,0,0],
+  target:[8,8,8,7,10,9,8,8,8,8,8,8,8]
+};
+const avgW1 = readiness.w1.reduce((a,b)=>a+b,0)/readiness.w1.length;
+const avgW2 = readiness.w2.reduce((a,b)=>a+b,0)/readiness.w2.length;
+const avgW3 = readiness.w3.reduce((a,b)=>a+b,0)/readiness.w3.length;
+
+const funnel = {
+  stages:['TF Search Impressions','Click Thumbnail','Watch Video Preview','Click Live Preview','Read Description','Add to Cart','Complete Purchase'],
+  w1:[10000,180,0,25,38,4,3],
+  w2:[10000,210,0,32,44,5,4],
+  w3:[10000,240,5,38,52,6,5],
+  opt:[10000,1200,540,780,660,42,34]
+};
+
+const salesDates=['5-Feb','12-Feb','19-Feb','26-Feb','5-Mar','12-Mar','19-Mar','26-Mar','2-Apr','9-Apr','16-Apr','23-Apr','30-Apr'];
+const salesW1=[4,5,5,6,7,7,8,6,7,8,9,8,10];
+const salesW2=[6,7,8,8,9,10,9,11,10,12,11,13,12];
+const salesW3=[9,11,13,12,14,13,15,16,14,17,16,18,19];
+
+const traffic={
+  channels:['TF Search','Direct/Demo','Google Organic','YouTube','Dribbble/Behance','Reddit/Forums','Email','Affiliate'],
+  w1:[1240,420,310,85,260,70,45,30],
+  w2:[2100,680,540,140,120,180,90,75],
+  w3:[1850,590,720,430,90,150,110,60]
+};
+
+const revenue={
+  scenarios:['Conservative','Moderate','Optimistic'],
+  w1:[1509,3019,6038], w2:[1072,2144,4288], w3:[1728,3456,6913]
+};
+
+const competitors={
+  names:['Avada','Flatsome','Divi','Bridge','Jupiter X','Astra Pro','Webflow','MOJO'],
+  sales:[4830,3200,2950,2070,1800,1450,1200,650]
+};
+
+const gaps=[
+  ['Responsive Layout','Partial','Partial','Partial','Critical'],
+  ['Sticky Header','No','No','No','Critical'],
+  ['Mobile Hamburger Menu','Partial','Partial','Partial','Critical'],
+  ['Contact Form + Validation','No','No','No','Critical'],
+  ['GDPR Cookie Consent','No','No','No','Critical'],
+  ['Cross-browser Tested','No','No','No','Critical'],
+  ['WCAG Keyboard Nav','No','No','No','Critical'],
+  ['Documentation (PDF/HTML)','No','No','No','Critical'],
+  ['Smooth Scrolling','No','No','Partial','High'],
+  ['Back-to-Top Button','No','No','No','High'],
+  ['404 Error Page','No','No','No','Critical'],
+  ['Search Functionality','No','No','No','High'],
+  ['Dark Mode Variant','No','No','No','High'],
+  ['Pricing Tables','N/A','No','No','Critical'],
+  ['Testimonials Section','No','No','No','High'],
+  ['Team / Instructor Section','No','No','No','High'],
+  ['FAQ Accordion','No','No','No','High'],
+  ['Video Lightbox','N/A','N/A','No','High'],
+  ['Social Share Buttons','No','No','No','Medium'],
+  ['Schema.org Data','No','No','No','Medium'],
+];
+
+const roadmap=[
+  ['p1','Responsive layout (320–2560px)','Frontend Dev',1,3,'Critical'],
+  ['p1','Contact forms + validation','Frontend Dev',1,2,'Critical'],
+  ['p1','GDPR cookie consent','Frontend Dev',1,1,'Critical'],
+  ['p1','W3C HTML validate','Frontend Dev',2,3,'Critical'],
+  ['p1','Fix JS errors & broken links','Frontend Dev',2,3,'Critical'],
+  ['p1','Documentation PDF','Tech Writer',2,3,'Critical'],
+  ['p2','Build 8–12 inner pages/site','Design+Dev',4,6,'High'],
+  ['p2','Full visual redesign','Designer',4,5,'High'],
+  ['p2','Scroll animations (AOS.js)','Frontend Dev',5,6,'High'],
+  ['p2','Dark mode variant','Designer',5,6,'High'],
+  ['p2','WebP images + minification','Frontend Dev',6,6,'High'],
+  ['p2','Retina screenshots + promo video','Marketing',6,6,'High'],
+  ['p3','RTL + multi-language layout','Frontend Dev',7,8,'Medium'],
+  ['p3','Gulp/Webpack pipeline','Frontend Dev',7,8,'Medium'],
+  ['p3','CSS colour skin presets (3+)','Designer',8,9,'Medium'],
+  ['p3','Schema.org structured data','Frontend Dev',9,9,'Medium'],
+  ['p3','Figma design system add-on','Designer',9,10,'Medium'],
+  ['p3','Envato Elements listing','Marketing',10,10,'Medium'],
+];
+
+// ── CHART REGISTRY ──
+const charts={};
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function mkc(id,h){return `<div class="ch" style="height:${h}px"><canvas id="${id}"></canvas></div>`;}
+
+function leg(items){
+  return `<div class="legend">${items.map(([c,l])=>`<span><b style="background:${c}"></b>${l}</span>`).join('')}</div>`;
+}
+
+let activeFilter='all';
+function applyFilter(){
+  activeFilter=document.getElementById('tmplFilter').value;
+  buildKPIs();
+  const active=document.querySelector('.page.active');
+  if(active) {
+    const id=active.id.replace('p-','');
+    builders[id]&&builders[id]();
+  }
+}
+
+// ── KPI ROW ──
+function buildKPIs(){
+  const row=document.getElementById('kpiRow');
+  if(!row)return;
+  let avg=((avgW1+avgW2+avgW3)/3).toFixed(1);
+  let conv='0.040%', gaps_n=17, rev='$8,619', traffic_n='10,385', units=275;
+  if(activeFilter==='w1'){avg=avgW1.toFixed(1);conv='0.030%';gaps_n=16;rev='$3,019';traffic_n='2,460';units=61;}
+  if(activeFilter==='w2'){avg=avgW2.toFixed(1);conv='0.040%';gaps_n=17;rev='$2,144';traffic_n='3,925';units=87;}
+  if(activeFilter==='w3'){avg=avgW3.toFixed(1);conv='0.050%';gaps_n=16;rev='$3,456';traffic_n='4,000';units=127;}
+  const kpis=[
+    {c:'navy', lbl:'Avg TF Readiness',     val:avg+'/10',  d:'Target 8.0+/10',       cls:'dn'},
+    {c:'red',  lbl:'Current Conv. Rate',   val:conv,       d:'Target: 0.34%',        cls:'dn'},
+    {c:'red',  lbl:'Critical Gaps',        val:gaps_n,     d:'Must fix before submit',cls:'dn'},
+    {c:'green',lbl:'Moderate Y1 Revenue',  val:rev,        d:'62.5% author share',   cls:''},
+    {c:'blue', lbl:'Monthly Visitors',     val:traffic_n,  d:'(30 days)',            cls:'up'},
+    {c:'amber',lbl:'Units Sold (90d)',      val:units,      d:'All templates',        cls:'up'},
+  ];
+  row.innerHTML=kpis.map(k=>`<div class="kpi-card ${k.c}">
+    <div class="kpi-lbl">${k.lbl}</div>
+    <div class="kpi-val">${k.val}</div>
+    <div class="kpi-delta ${k.cls}">${k.d}</div>
+  </div>`).join('');
+}
+
+// ── RAG helper ──
+function ragClass(avg){
+  if(avg<=2) return 'rag-cr';
+  if(avg<=4) return 'rag-mj';
+  if(avg<=6) return 'rag-mo';
+  return 'rag-ok';
+}
+function ragLabel(avg){
+  if(avg<=2) return '<span class="pill cr">Critical</span>';
+  if(avg<=4) return '<span class="pill mj">Major Gap</span>';
+  if(avg<=6) return '<span class="pill mo">Moderate</span>';
+  return '<span class="pill rd">Ready</span>';
+}
+
+// ══ PAGE BUILDERS ══════════════════════════════════════════════════════
+
+function buildOverview(){
+  const el=document.getElementById('p-overview');
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="g13">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--navy)"></span>Readiness scores vs target — all criteria</div>
+      ${leg([[C.w1,'W1 Architect'],[C.w2,'W2 Business'],[C.w3,'W3 Course'],[C.tgt,'Target (8+)']])}
+      ${mkc('overviewBar',240)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>RAG status scorecard</div>
+      <div style="overflow-y:auto;max-height:265px">
+      <table class="dash-table">
+        <thead><tr><th>Criterion</th><th>W1</th><th>W2</th><th>W3</th><th>Status</th></tr></thead>
+        <tbody id="ragBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Overall readiness vs target</div>
+      ${mkc('readBar',180)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>Zero-score gaps per template</div>
+      ${mkc('gapDonut',180)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--text3)"></span>Competitor lifetime sales benchmark</div>
+      ${mkc('compBar',180)}
+    </div>
+  </div>`;
+
+  buildKPIs();
+
+  setTimeout(()=>{
+    // RAG table
+    const rb=document.getElementById('ragBody');
+    rb.innerHTML=readiness.criteria.map((c,i)=>{
+      const avg=(readiness.w1[i]+readiness.w2[i]+readiness.w3[i])/3;
+      return `<tr>
+        <td>${c}</td>
+        <td class="${ragClass((readiness.w1[i]+readiness.w2[i]+readiness.w3[i])/3)}">${readiness.w1[i]}</td>
+        <td class="${ragClass((readiness.w1[i]+readiness.w2[i]+readiness.w3[i])/3)}">${readiness.w2[i]}</td>
+        <td class="${ragClass((readiness.w1[i]+readiness.w2[i]+readiness.w3[i])/3)}">${readiness.w3[i]}</td>
+        <td>${ragLabel(avg)}</td>
+      </tr>`;
+    }).join('');
+
+    // Overview grouped bar
+    dc('overviewBar');
+    charts['overviewBar']=new Chart(document.getElementById('overviewBar'),{
+      type:'bar',
+      data:{labels:readiness.criteria.map(c=>c.length>16?c.slice(0,15)+'…':c),datasets:[
+        {label:'W1',data:readiness.w1,backgroundColor:C.w1+'BB'},
+        {label:'W2',data:readiness.w2,backgroundColor:C.w2+'BB'},
+        {label:'W3',data:readiness.w3,backgroundColor:C.w3+'BB'},
+        {label:'Target',data:readiness.target,backgroundColor:'transparent',borderColor:C.tgt,borderWidth:2,type:'line',pointRadius:3,pointBackgroundColor:C.tgt},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{min:0,max:10,ticks:{font:{size:9},stepSize:2}}}}
+    });
+
+    dc('readBar');
+    charts['readBar']=new Chart(document.getElementById('readBar'),{
+      type:'bar',
+      data:{labels:['W1 Architect','W2 Business','W3 Course'],datasets:[
+        {label:'Avg Score',data:[parseFloat(avgW1.toFixed(1)),parseFloat(avgW2.toFixed(1)),parseFloat(avgW3.toFixed(1))],backgroundColor:[C.w1,C.w2,C.w3],borderRadius:4},
+        {label:'Target',data:[8,8,8],backgroundColor:'rgba(226,75,74,.12)',borderColor:C.tgt,borderWidth:1.5},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:10,ticks:{font:{size:9}}},x:{ticks:{font:{size:9}}}}}
+    });
+
+    dc('gapDonut');
+    charts['gapDonut']=new Chart(document.getElementById('gapDonut'),{
+      type:'doughnut',
+      data:{labels:['W1 Architect','W2 Business','W3 Course'],datasets:[{data:[readiness.w1.filter(x=>x===0).length,readiness.w2.filter(x=>x===0).length,readiness.w3.filter(x=>x===0).length],backgroundColor:[C.w1,C.w2,C.w3],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10,padding:8}}}}
+    });
+
+    dc('compBar');
+    charts['compBar']=new Chart(document.getElementById('compBar'),{
+      type:'bar',
+      data:{labels:competitors.names,datasets:[{label:'Lifetime Sales',data:competitors.sales,backgroundColor:C.lb,borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+    });
+  },60);
+}
+
+function buildFunnel(){
+  const el=document.getElementById('p-funnel');
+  const funnelBars=funnel.stages.map((s,i)=>{
+    const avg=Math.round((funnel.w1[i]+funnel.w2[i]+funnel.w3[i])/3);
+    const maxV=funnel.opt[i]||1;
+    const pct=Math.min(100,Math.round(avg/maxV*100));
+    return `<div class="funnel-item">
+      <div class="funnel-label"><span class="name">${s}</span><span class="nums">Avg: ${avg.toLocaleString()} / Opt: ${funnel.opt[i].toLocaleString()}</span></div>
+      <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${pct}%;background:${C.w1}"></div></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Funnel: current vs optimised (per 10,000 impressions)</div>
+      ${leg([[C.w1,'W1'],[C.w2,'W2'],[C.w3,'W3'],[C.tgt,'Optimised target']])}
+      ${mkc('funnelChart',280)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--w3)"></span>Stage waterfall — avg current vs optimised</div>
+      ${funnelBars}
+      <div style="margin-top:10px;font-size:11px;color:var(--text2)">Final conv. rate: <b style="color:var(--red)">0.04%</b> current → <b style="color:var(--w3)">0.34%</b> optimised = <b>8.5× uplift</b></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Uplift multiplier per stage (optimised ÷ current)</div>
+    ${mkc('upliftBar',150)}
+  </div>`;
+
+  buildKPIs();
+  setTimeout(()=>{
+    dc('funnelChart');
+    charts['funnelChart']=new Chart(document.getElementById('funnelChart'),{
+      type:'bar',
+      data:{labels:funnel.stages.map(s=>s.length>18?s.slice(0,17)+'…':s),datasets:[
+        {label:'W1',data:funnel.w1,backgroundColor:C.w1+'CC'},
+        {label:'W2',data:funnel.w2,backgroundColor:C.w2+'CC'},
+        {label:'W3',data:funnel.w3,backgroundColor:C.w3+'CC'},
+        {label:'Optimised',data:funnel.opt,backgroundColor:'rgba(226,75,74,.15)',borderColor:C.tgt,borderWidth:1.5},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},maxRotation:40,autoSkip:false}},y:{ticks:{font:{size:9}}}}}
+    });
+    dc('upliftBar');
+    const uplifts=funnel.stages.slice(1).map((_,i)=>{
+      const j=i+1;const avg=(funnel.w1[j]+funnel.w2[j]+funnel.w3[j])/3;
+      return avg===0?null:parseFloat((funnel.opt[j]/avg).toFixed(1));
+    });
+    charts['upliftBar']=new Chart(document.getElementById('upliftBar'),{
+      type:'bar',
+      data:{labels:funnel.stages.slice(1).map(s=>s.length>18?s.slice(0,17)+'…':s),datasets:[{label:'Uplift ×',data:uplifts,backgroundColor:uplifts.map(v=>v===null?'#ccc':v>50?C.tgt:v>10?C.w2:C.w3),borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},maxRotation:40,autoSkip:false}},y:{title:{display:true,text:'× uplift',font:{size:9}},ticks:{font:{size:9}}}}}
+    });
+  },60);
+}
+
+function buildSales(){
+  const el=document.getElementById('p-sales');
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Weekly units sold — 90-day rolling trend</div>
+    ${leg([[C.w1,'W1 Architect ($69)'],[C.w2,'W2 Business ($49)'],[C.w3,'W3 Course ($79)']])}
+    ${mkc('salesLine',230)}
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--w3)"></span>Revenue mix (90 days)</div>
+      ${mkc('revDonut',185)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Units by template (90 days)</div>
+      ${mkc('unitBar',185)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Revenue trend — cumulative (90d)</div>
+      ${mkc('revArea',185)}
+    </div>
+  </div>`;
+
+  buildKPIs();
+  setTimeout(()=>{
+    dc('salesLine');
+    charts['salesLine']=new Chart(document.getElementById('salesLine'),{
+      type:'line',
+      data:{labels:salesDates,datasets:[
+        {label:'W1 Architect',data:salesW1,borderColor:C.w1,backgroundColor:C.w1+'18',fill:true,tension:.35,pointRadius:3,borderWidth:2},
+        {label:'W2 Business', data:salesW2,borderColor:C.w2,backgroundColor:C.w2+'18',fill:true,tension:.35,pointRadius:3,borderWidth:2,borderDash:[5,2]},
+        {label:'W3 Course',   data:salesW3,borderColor:C.w3,backgroundColor:C.w3+'18',fill:true,tension:.35,pointRadius:3,borderWidth:2,borderDash:[2,2]},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:30}},y:{ticks:{font:{size:9}}}}}
+    });
+    dc('revDonut');
+    charts['revDonut']=new Chart(document.getElementById('revDonut'),{
+      type:'doughnut',
+      data:{labels:['W1 $2,631','W2 $2,664','W3 $6,271'],datasets:[{data:[2631,2664,6271],backgroundColor:[C.w1,C.w2,C.w3],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}
+    });
+    dc('unitBar');
+    charts['unitBar']=new Chart(document.getElementById('unitBar'),{
+      type:'bar',
+      data:{labels:['W1 Architect','W2 Business','W3 Course'],datasets:[{label:'Units',data:[61,87,127],backgroundColor:[C.w1,C.w2,C.w3],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+    });
+    dc('revArea');
+    const cumW1=salesW1.map((v,i)=>salesW1.slice(0,i+1).reduce((a,b)=>a+b,0)*69*0.625);
+    const cumW2=salesW2.map((v,i)=>salesW2.slice(0,i+1).reduce((a,b)=>a+b,0)*49*0.625);
+    const cumW3=salesW3.map((v,i)=>salesW3.slice(0,i+1).reduce((a,b)=>a+b,0)*79*0.625);
+    charts['revArea']=new Chart(document.getElementById('revArea'),{
+      type:'line',
+      data:{labels:salesDates,datasets:[
+        {label:'W1',data:cumW1,borderColor:C.w1,backgroundColor:C.w1+'22',fill:true,tension:.3,pointRadius:0,borderWidth:1.5},
+        {label:'W2',data:cumW2,borderColor:C.w2,backgroundColor:C.w2+'22',fill:true,tension:.3,pointRadius:0,borderWidth:1.5},
+        {label:'W3',data:cumW3,borderColor:C.w3,backgroundColor:C.w3+'22',fill:true,tension:.3,pointRadius:0,borderWidth:1.5},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},maxRotation:30}},y:{ticks:{font:{size:9},callback:v=>'$'+Math.round(v/1000)+'k'}}}}
+    });
+  },60);
+}
+
+function buildTraffic(){
+  const el=document.getElementById('p-traffic');
+  const totals=traffic.channels.map((_,i)=>traffic.w1[i]+traffic.w2[i]+traffic.w3[i]);
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Visitors by channel — stacked (30 days)</div>
+      ${leg([[C.w1,'W1'],[C.w2,'W2'],[C.w3,'W3']])}
+      ${mkc('trafficStacked',320)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--w3)"></span>Channel share — combined total</div>
+      ${mkc('trafficPie',200)}
+      <div style="overflow-y:auto;max-height:140px;margin-top:8px">
+      <table class="dash-table">
+        <thead><tr><th>Channel</th><th>W1</th><th>W2</th><th>W3</th><th>Total</th></tr></thead>
+        <tbody>${traffic.channels.map((ch,i)=>`<tr><td>${ch}</td><td>${traffic.w1[i].toLocaleString()}</td><td>${traffic.w2[i].toLocaleString()}</td><td>${traffic.w3[i].toLocaleString()}</td><td><b>${totals[i].toLocaleString()}</b></td></tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+  </div>`;
+
+  buildKPIs();
+  setTimeout(()=>{
+    dc('trafficStacked');
+    charts['trafficStacked']=new Chart(document.getElementById('trafficStacked'),{
+      type:'bar',
+      data:{labels:traffic.channels,datasets:[
+        {label:'W1',data:traffic.w1,backgroundColor:C.w1+'CC'},
+        {label:'W2',data:traffic.w2,backgroundColor:C.w2+'CC'},
+        {label:'W3',data:traffic.w3,backgroundColor:C.w3+'CC'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:9}}},y:{stacked:true,ticks:{font:{size:9}}}}}
+    });
+    dc('trafficPie');
+    const pie_colors=['#378ADD','#EF9F27','#1D9E75','#BDD7EE','#FAC775','#A7F3D0','#FCA5A5','#C4B5FD'];
+    charts['trafficPie']=new Chart(document.getElementById('trafficPie'),{
+      type:'pie',
+      data:{labels:traffic.channels,datasets:[{data:totals,backgroundColor:pie_colors,borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:10,padding:6}}}}
+    });
+  },60);
+}
+
+function buildRevenue(){
+  const el=document.getElementById('p-revenue');
+  const portTotals=revenue.scenarios.map((_,i)=>revenue.w1[i]+revenue.w2[i]+revenue.w3[i]);
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Year-1 revenue by scenario per template ($)</div>
+      ${leg([[C.lb,'W1 Architect'],[C.la,'W2 Business'],[C.lg,'W3 Course']])}
+      ${mkc('revScenBar',250)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--w3)"></span>Portfolio total by scenario</div>
+      ${mkc('portBar',160)}
+      <div style="margin-top:12px">
+        <table class="dash-table">
+          <thead><tr><th>Scenario</th><th>W1</th><th>W2</th><th>W3</th><th>Portfolio</th></tr></thead>
+          <tbody>${revenue.scenarios.map((s,i)=>`<tr><td><b>${s}</b></td><td>$${revenue.w1[i].toLocaleString()}</td><td>$${revenue.w2[i].toLocaleString()}</td><td>$${revenue.w3[i].toLocaleString()}</td><td><b>$${portTotals[i].toLocaleString()}</b></td></tr>`).join('')}</tbody>
+        </table>
+        <div style="font-size:10px;color:var(--text2);margin-top:8px">Prices: W1 $69 · W2 $49 · W3 $79 · Author share 62.5%</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title"><span class="dot" style="background:var(--text3)"></span>Competitor lifetime sales benchmark</div>
+    ${mkc('compBar2',160)}
+  </div>`;
+
+  buildKPIs();
+  setTimeout(()=>{
+    dc('revScenBar');
+    charts['revScenBar']=new Chart(document.getElementById('revScenBar'),{
+      type:'bar',
+      data:{labels:revenue.scenarios,datasets:[
+        {label:'W1 Architect',data:revenue.w1,backgroundColor:'#4FA6E8',borderRadius:3},
+        {label:'W2 Business', data:revenue.w2,backgroundColor:C.w2,borderRadius:3},
+        {label:'W3 Course',   data:revenue.w3,backgroundColor:C.w3,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>'$'+v.toLocaleString()}}}}
+    });
+    dc('portBar');
+    charts['portBar']=new Chart(document.getElementById('portBar'),{
+      type:'bar',
+      data:{labels:revenue.scenarios,datasets:[{label:'Portfolio Total',data:portTotals,backgroundColor:[C.lb,'#9FE1CB','#85B7EB'],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},callback:v=>'$'+v.toLocaleString()}}}}
+    });
+    dc('compBar2');
+    charts['compBar2']=new Chart(document.getElementById('compBar2'),{
+      type:'bar',
+      data:{labels:competitors.names,datasets:[{label:'Sales',data:competitors.sales,backgroundColor:'#CBD5E1',borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+    });
+  },60);
+}
+
+function buildGaps(){
+  const el=document.getElementById('p-gaps');
+  const sc=v=>{if(v==='No')return 'no';if(v==='Yes')return 'yes';if(v==='Partial')return 'partial';return 'na2';};
+  const pc=p=>{if(p==='Critical')return 'cr';if(p==='High')return 'mj';return 'mo';};
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--red)"></span>Gap count by template (No / Partial / N/A)</div>
+      ${mkc('gapStackBar',200)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Priority breakdown — total gaps</div>
+      ${mkc('priDonut',200)}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--navy)"></span>Feature presence matrix — 20 critical requirements</div>
+    <div style="overflow-x:auto">
+    <table class="dash-table">
+      <thead><tr><th>Feature / Requirement</th><th>W1 Architect</th><th>W2 Business</th><th>W3 Course</th><th>Priority</th></tr></thead>
+      <tbody>${gaps.map(g=>`<tr><td>${g[0]}</td><td class="${sc(g[1])}">${g[1]}</td><td class="${sc(g[2])}">${g[2]}</td><td class="${sc(g[3])}">${g[3]}</td><td><span class="pill ${pc(g[4])}">${g[4]}</span></td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+
+  buildKPIs();
+  setTimeout(()=>{
+    dc('gapStackBar');
+    charts['gapStackBar']=new Chart(document.getElementById('gapStackBar'),{
+      type:'bar',
+      data:{labels:['W1 Architect','W2 Business','W3 Course'],datasets:[
+        {label:'No',data:[16,17,16],backgroundColor:'#FCA5A5'},
+        {label:'Partial',data:[2,2,3],backgroundColor:'#FDE68A'},
+        {label:'N/A',data:[2,1,1],backgroundColor:'#E2E8F0'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}},scales:{x:{stacked:true,ticks:{font:{size:9}}},y:{stacked:true,ticks:{font:{size:9}}}}}
+    });
+    dc('priDonut');
+    charts['priDonut']=new Chart(document.getElementById('priDonut'),{
+      type:'doughnut',
+      data:{labels:['Critical (9)','High (8)','Medium (3)'],datasets:[{data:[9,8,3],backgroundColor:['#FCA5A5','#FDE68A','#BBF7D0'],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}
+    });
+  },60);
+}
+
+function buildRoadmap(){
+  const el=document.getElementById('p-roadmap');
+  const phaseNames={p1:'Phase 1 — Critical Fixes (Wk 1–3)',p2:'Phase 2 — High Priority (Wk 4–6)',p3:'Phase 3 — Competitive Edge (Wk 7–10)'};
+  let lastP='';
+  const rows=roadmap.map(t=>{
+    let ph='';
+    if(t[0]!==lastP){lastP=t[0];ph=`<div class="phase-header ${t[0]}">${phaseNames[t[0]]}</div>`;}
+    const wks=Array.from({length:10},(_,i)=>{
+      const w=i+1;const on=w>=t[3]&&w<=t[4];
+      return `<div class="gantt-wk${on?' '+t[0]:''}" title="Wk ${w}"></div>`;
+    }).join('');
+    return `${ph}<div class="gantt-row">
+      <div class="gantt-task" title="${t[1]}">${t[1]}</div>
+      <div class="gantt-owner">${t[2]}</div>
+      <div class="gantt-wks">${wks}</div>
+      <div style="min-width:60px;text-align:right"><span class="pill ${t[5]==='Critical'?'cr':t[5]==='High'?'mj':'mo'}">${t[5]}</span></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+  <div id="kpiRow" class="kpi-row"></div>
+  <div class="g3" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Tasks by phase</div>
+      ${mkc('phaseDonut',170)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--w2)"></span>Tasks by owner</div>
+      ${mkc('ownerBar',170)}
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--w3)"></span>Priority split</div>
+      ${mkc('priBar2',170)}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--navy)"></span>10-week Gantt — all 18 tasks
+      <span style="margin-left:auto;font-size:10px;font-weight:400;color:var(--text2)">
+        <span style="display:inline-block;width:10px;height:10px;background:#BFDBFE;border-radius:2px;margin-right:3px"></span>Phase 1
+        <span style="display:inline-block;width:10px;height:10px;background:#FDE68A;border-radius:2px;margin:0 3px 0 8px"></span>Phase 2
+        <span style="display:inline-block;width:10px;height:10px;background:#BBF7D0;border-radius:2px;margin:0 3px 0 8px"></span>Phase 3
+      </span>
+    </div>
+    ${rows}
+  </div>`;
+
+  buildKPIs();
+  setTimeout(()=>{
+    dc('phaseDonut');
+    charts['phaseDonut']=new Chart(document.getElementById('phaseDonut'),{
+      type:'doughnut',
+      data:{labels:['Phase 1 Critical','Phase 2 High','Phase 3 Edge'],datasets:[{data:[6,6,6],backgroundColor:['#BFDBFE','#FDE68A','#BBF7D0'],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}
+    });
+    dc('ownerBar');
+    charts['ownerBar']=new Chart(document.getElementById('ownerBar'),{
+      type:'bar',
+      data:{labels:['Frontend Dev','Designer','Design+Dev','Tech Writer','Marketing'],datasets:[{label:'Tasks',data:[10,4,1,1,2],backgroundColor:C.w1,borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+    });
+    dc('priBar2');
+    charts['priBar2']=new Chart(document.getElementById('priBar2'),{
+      type:'bar',
+      data:{labels:['Critical','High','Medium'],datasets:[{label:'Tasks',data:[6,9,3],backgroundColor:['#FCA5A5','#FDE68A','#BBF7D0'],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},stepSize:2}}}}
+    });
+  },60);
+}
+
+// ── TABS ──
+const tabs=[
+  {id:'overview', label:'📊 Overview'},
+  {id:'funnel',   label:'🔽 Conversion'},
+  {id:'sales',    label:'📈 Sales Trend'},
+  {id:'traffic',  label:'🌐 Traffic'},
+  {id:'revenue',  label:'💰 Revenue'},
+  {id:'gaps',     label:'⚠️ Gap Matrix'},
+  {id:'roadmap',  label:'🗓 Roadmap'},
+];
+
+const builders={overview:buildOverview,funnel:buildFunnel,sales:buildSales,traffic:buildTraffic,revenue:buildRevenue,gaps:buildGaps,roadmap:buildRoadmap};
+
+const nav=document.getElementById('tabNav');
+nav.innerHTML=tabs.map((t,i)=>`<button class="tab${i===0?' active':''}" onclick="switchTab('${t.id}')">${t.label}</button>`).join('');
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i].id===id));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  builders[id]&&builders[id]();
+}
+
+// ── INIT ──
+buildOverview();
+</script>
+</body>
+</html>
